@@ -13,27 +13,33 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Віддаємо файли з папки uploads (наприклад, завантажені файли)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// Підключаємо API роутери
 app.use('/api/slots', slotRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/materials', materialsRoutes);
 app.use('/api/auth', authRoutes);
 
 // Віддаємо статичні файли з папки frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Для всіх маршрутів, що не починаються з /api, віддаємо index.html (для SPA)
+// Для всіх маршрутів, що не починаються з /api, віддаємо frontend/index.html
 app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'), (err) => {
+    if (err) {
+      console.error('Помилка при віддачі index.html:', err);
+      res.status(500).send('Виникла помилка сервера');
+    }
+  });
 });
 
-// Error handling — додано детальний лог і повернення тексту помилки в відповіді
+// Обробка помилок
 app.use((err, req, res, next) => {
-  console.error('Error message:', err.message);
-  console.error('Error stack:', err.stack);
-  res.status(500).json({ message: err.message || 'Щось пішло не так!' });
+  console.error(err.stack);
+  res.status(500).json({ message: 'Щось пішло не так!' });
 });
 
 const PORT = process.env.PORT || 3000;
