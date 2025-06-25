@@ -20,16 +20,14 @@ app.use('/api/slots', slotRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/materials', materialsRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Віддаємо статичні файли з папки frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Для всіх маршрутів, що не починаються з /api, віддаємо index.html
+// Для всіх маршрутів, що не починаються з /api, віддаємо index.html (для SPA)
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
-
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -39,10 +37,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
+// Створюємо папку uploads, якщо її немає
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
 async function startServer() {
   try {
     await getPool();
