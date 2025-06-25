@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Кабінет</title>
+  <style>
+  body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    .panel {
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    .slot-card {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button.cancel {
+      background-color: #f44336;
+    }
+    button.cancel:hover {
+      background-color: #d32f2f;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    input[type="datetime-local"], input[type="file"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      width: 100%;
+      font-size: 0.9rem;
+    }
+    .hidden {
+      display: none;
+    }
+    .booking-status {
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    .status-booked {
+      background-color: #ff9800;
+      color: white;
+    }
+    .status-completed {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .status-cancelled {
+      background-color: #f44336;
+      color: white;
+    }
+    .status-available {
+      background-color: #2196F3;
+      color: white;
+    }
+    .material-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .material-name {
+      color: #2196F3;
+      text-decoration: none;
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    /* Мобільні стилі */
+    @media (min-width: 600px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+      }
+      .slot-card {
+        flex-direction: row;
+        align-items: center;
+      }
+      button {
+        margin-top: 0;
+        margin-left: 10px;
+      }
+      .material-item {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .container {
+        padding: 10px;
+      }
+      header {
+        padding: 10px;
+      }
+      .panel {
+        padding: 10px;
+      }
+      button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Вітаємо, <span id="username"></span>!</h1>
+      <div>
+        <span id="role" style="margin-right: 20px;"></span>
+        <button onclick="logout()">Вийти</button>
+      </div>
+    </header>
+
+    <div id="teacherPanel" class="hidden">
+      <div class="panel">
+        <h2>Створити слот консультації</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <label for="startTime">Початок:</label>
+            <input type="datetime-local" id="startTime">
+          </div>
+          <div>
+            <label for="endTime">Кінець:</label>
+            <input type="datetime-local" id="endTime">
+          </div>
+        </div>
+        <button onclick="createSlot()">Додати слот</button>
+      </div>
+
+      <div class="panel">
+        <h2>Мої слоти</h2>
+        <ul id="teacherSlotsList"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Завантажити матеріал</h2>
+        <input type="file" id="materialFile">
+        <button onclick="uploadMaterial()">Завантажити</button>
+      </div>
+
+      <div class="panel">
+        <h2>Мої матеріали</h2>
+        <ul id="materialsList"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Бронювання моїх слотів</h2>
+        <ul id="teacherBookings"></ul>
+      </div>
+    </div>
+
+    <div id="studentPanel" class="hidden">
+      <div class="panel">
+        <h2>Доступні консультації</h2>
+        <ul id="slotsList"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Мої бронювання</h2>
+        <ul id="studentBookings"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Перевірка авторизації
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!token || !user) {
+      alert('Будь ласка, увійдіть в систему');
+      window.location.href = 'index.html';
+    }
+
+    // Відображення інформації про користувача
+    document.getElementById('username').textContent = user.first_name || 'Користувач';
+    document.getElementById('role').textContent = user.role === 'teacher' ? 'Викладач' : 'Студент';
+
+    // Зберігання заброньованих слотів для студента
+    let studentBookedSlots = [];
+
+    // Відображення відповідної панелі
+    if (user.role === 'teacher') {
+      document.getElementById('teacherPanel').classList.remove('hidden');
+      loadTeacherData();
+    } else {
+      document.getElementById('studentPanel').classList.remove('hidden');
+      loadStudentData();
+    }
+
+    // Функція виходу
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+    }
+
+    // Завантаження даних для викладача
+    async function loadTeacherData() {
+      try {
+        await Promise.all([
+          loadTeacherSlots(),
+          loadTeacherBookings(),
+          loadTeacherMaterials()
+        ]);
+      } catch (err) {
+        console.error('Error loading teacher data:', err);
+        alert('Помилка завантаження даних');
+      }
+    }
+
+    // Завантаження слотів викладача
+    async function loadTeacherSlots() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/slots/teacher/${user.user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Не вдалося завантажити слоти');
+        
+        const slots = await response.json();
+        const slotsList = document.getElementById('teacherSlotsList');
+        slotsList.innerHTML = '';
+
+        if (slots.length === 0) {
+          slotsList.innerHTML = '<li>У вас ще немає слотів</li>';
+          return;
+        }
+
+        slots.forEach(slot => {
+          const li = document.createElement('li');
+          li.className = 'slot-card';
+          
+          const slotInfo = document.createElement('div');
+          slotInfo.innerHTML = `
+            <strong>${new Date(slot.start_time).toLocaleString()}</strong> - 
+            <strong>${new Date(slot.end_time).toLocaleString()}</strong>
+            <span class="booking-status status-${slot.status}">${slot.status}</span>
+          `;
+          
+          li.appendChild(slotInfo);
+          slotsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error loading teacher slots:', err);
+        alert(err.message);
+      }
+    }
+
+    // Завантаження бронювань викладача
+    async function loadTeacherBookings() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/bookings/teacher/${user.user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Не вдалося завантажити бронювання');
+        
+        const bookings = await response.json();
+        const bookingsList = document.getElementById('teacherBookings');
+        bookingsList.innerHTML = '';
+
+        if (bookings.length === 0) {
+          bookingsList.innerHTML = '<li>У вас ще немає бронювань</li>';
+          return;
+        }
+
+        bookings.forEach(booking => {
+          const li = document.createElement('li');
+          li.className = 'slot-card';
+          
+          li.innerHTML = `
+            <div>
+              <strong>Студент:</strong> ${booking.student_name}<br>
+              <strong>Час:</strong> ${new Date(booking.start_time).toLocaleString()} - ${new Date(booking.end_time).toLocaleString()}<br>
+              <strong>Статус:</strong> <span class="booking-status status-${booking.status}">${booking.status}</span>
+            </div>
+          `;
+          
+          bookingsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error loading teacher bookings:', err);
+        alert(err.message);
+      }
+    }
+
+    // Завантаження матеріалів викладача
+    async function loadTeacherMaterials() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/materials/teacher/${user.user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Не вдалося завантажити матеріали');
+        
+        const materials = await response.json();
+        const materialsList = document.getElementById('materialsList');
+        materialsList.innerHTML = '';
+
+        if (materials.length === 0) {
+          materialsList.innerHTML = '<li>У вас ще немає матеріалів</li>';
+          return;
+        }
+
+        materials.forEach(material => {
+          const li = document.createElement('li');
+          li.className = 'material-item';
+          
+          li.innerHTML = `
+            <a href="http://localhost:3000/${material.file_path}" class="material-name" target="_blank">${material.name}</a>
+            <span>${new Date(material.upload_date).toLocaleDateString()}</span>
+          `;
+          
+          materialsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error loading materials:', err);
+        alert(err.message);
+      }
+    }
+
+    // Створення слоту
+    async function createSlot() {
+      const startTime = document.getElementById('startTime').value;
+      const endTime = document.getElementById('endTime').value;
+      
+      if (!startTime || !endTime) {
+        alert('Будь ласка, вкажіть час початку та кінця');
+        return;
+      }
+      
+      if (new Date(startTime) >= new Date(endTime)) {
+        alert('Час кінця повинен бути пізніше часу початку');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/api/slots', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            teacher_id: user.user_id,
+            start_time: startTime,
+            end_time: endTime,
+            status: 'available'
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Помилка створення слоту');
+        }
+
+        alert('Слот успішно створено');
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        loadTeacherSlots();
+      } catch (err) {
+        console.error('Error creating slot:', err);
+        alert(err.message);
+      }
+    }
+
+    // Завантаження матеріалу
+    async function uploadMaterial() {
+      const fileInput = document.getElementById('materialFile');
+      
+      if (fileInput.files.length === 0) {
+        alert('Будь ласка, виберіть файл');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('teacher_id', user.user_id);
+
+      try {
+        const response = await fetch('http://localhost:3000/api/materials', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Помилка завантаження файлу');
+        }
+
+        alert('Матеріал успішно завантажено');
+        fileInput.value = '';
+        loadTeacherMaterials();
+      } catch (err) {
+        console.error('Error uploading material:', err);
+        alert(err.message);
+      }
+    }
+
+    // Завантаження даних для студента
+    async function loadStudentData() {
+      try {
+        // Спочатку завантажуємо бронювання студента, щоб знати які слоти заброньовані
+        await loadStudentBookings();
+        // Потім завантажуємо доступні слоти
+        await loadAvailableSlots();
+      } catch (err) {
+        console.error('Error loading student data:', err);
+        alert('Помилка завантаження даних');
+      }
+    }
+
+    // Завантаження бронювань студента
+    async function loadStudentBookings() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/bookings/student/${user.user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Не вдалося завантажити ваші бронювання');
+        
+        const bookings = await response.json();
+        
+        // Зберігаємо заброньовані слоти
+        studentBookedSlots = bookings
+          .filter(booking => booking.status === 'booked')
+          .map(booking => booking.slot_id);
+        
+        const bookingsList = document.getElementById('studentBookings');
+        bookingsList.innerHTML = '';
+
+        if (bookings.length === 0) {
+          bookingsList.innerHTML = '<li>У вас ще немає бронювань</li>';
+          return;
+        }
+
+        bookings.forEach(booking => {
+          const li = document.createElement('li');
+          li.className = 'slot-card';
+          
+          li.innerHTML = `
+            <div>
+              <strong>Викладач:</strong> ${booking.teacher_name}<br>
+              <strong>Час:</strong> ${new Date(booking.start_time).toLocaleString()} - ${new Date(booking.end_time).toLocaleString()}<br>
+              <strong>Статус:</strong> <span class="booking-status status-${booking.status}">${booking.status}</span>
+            </div>
+            ${booking.status === 'booked' ? `<button class="cancel" onclick="cancelBooking('${booking.booking_id}')">Скасувати</button>` : ''}
+          `;
+          
+          bookingsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error loading student bookings:', err);
+        alert(err.message);
+      }
+    }
+
+    // Завантаження доступних слотів
+    async function loadAvailableSlots() {
+      try {
+         const response = await fetch('http://localhost:3000/api/slots/available', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Не вдалося завантажити доступні слоти');
+        
+        const slots = await response.json();
+        const slotsList = document.getElementById('slotsList');
+        slotsList.innerHTML = '';
+
+        if (slots.length === 0) {
+          slotsList.innerHTML = '<li>Наразі немає доступних слотів</li>';
+          return;
+        }
+
+        // Фільтруємо тільки доступні слоти
+        const availableSlots = slots.filter(slot => slot.status === 'available');
+
+        if (availableSlots.length === 0) {
+          slotsList.innerHTML = '<li>Наразі немає доступних слотів</li>';
+          return;
+        }
+
+        availableSlots.forEach(slot => {
+          const li = document.createElement('li');
+          li.className = 'slot-card';
+          
+          // Перевіряємо, чи слот вже заброньований цим студентом
+          const isBooked = studentBookedSlots.includes(slot.slot_id);
+          
+          li.innerHTML = `
+            <div>
+              <strong>Викладач:</strong> ${slot.teacher_name}<br>
+              <strong>Час:</strong> ${new Date(slot.start_time).toLocaleString()} - ${new Date(slot.end_time).toLocaleString()}
+              ${isBooked ? '<br><span class="booking-status status-booked">Заброньовано вами</span>' : ''}
+            </div>
+            ${isBooked ? 
+              '<button disabled>Заброньовано</button>' : 
+              `<button onclick="bookSlot('${slot.slot_id}')">Забронювати</button>`
+            }
+          `;
+          
+          slotsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error loading available slots:', err);
+        alert(err.message);
+      }
+    }
+
+    // Бронювання слоту
+    async function bookSlot(slotId) {
+      if (!confirm('Ви впевнені, що хочете забронювати цей слот?')) return;
+
+      try {
+        const response = await fetch('http://localhost:3000/api/bookings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            student_id: user.user_id,
+            slot_id: slotId,
+            status: 'booked'
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Помилка бронювання');
+        }
+
+        alert('Слот успішно заброньовано');
+        loadStudentData();
+      } catch (err) {
+        console.error('Error booking slot:', err);
+        alert(err.message);
+      }
+    }
+
+    // Скасування бронювання
+    async function cancelBooking(bookingId) {
+      if (!confirm('Ви впевнені, що хочете скасувати це бронювання?')) return;
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/bookings/${bookingId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            status: 'cancelled'
+          })
+        });
+
+        if (!response.ok) {
+          let errorMessage = 'Помилка скасування бронювання';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonErr) {
+            // Якщо відповідь не JSON, використовуємо статус код
+            errorMessage = `Помилка сервера: ${response.status}`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        alert('Бронювання скасовано');
+        loadStudentData();
+      } catch (err) {
+        console.error('Error cancelling booking:', err);
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

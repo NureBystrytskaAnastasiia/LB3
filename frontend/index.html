@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Реєстрація / Вхід</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+      margin: 0;
+    }
+    .form-container {
+      max-width: 400px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    form {
+      display: none;
+    }
+    form.active {
+      display: block;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      color: #555;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .toggle-link {
+      margin-top: 15px;
+      text-align: center;
+      cursor: pointer;
+      color: #2196F3;
+      text-decoration: underline;
+      font-size: 0.9rem;
+    }
+    .error-message {
+      color: #f44336;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+    #teacherFields {
+      display: none;
+      margin-top: 15px;
+    }
+
+    /* Мобільні стилі */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .form-container {
+        margin: 10px auto;
+        padding: 15px;
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+      }
+      button {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .form-container {
+        padding: 10px;
+      }
+      input, select {
+        padding: 8px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h2 id="form-title">Реєстрація</h2>
+
+  <!-- Форма реєстрації -->
+  <form id="registerForm" class="active">
+    <label for="first_name">Ім'я:</label>
+    <input type="text" id="first_name" required />
+    <div id="first_name_error" class="error-message"></div>
+
+    <label for="email_reg">Email:</label>
+    <input type="email" id="email_reg" required />
+    <div id="email_reg_error" class="error-message"></div>
+
+    <label for="password_reg">Пароль (мінімум 6 символів):</label>
+    <input type="password" id="password_reg" required minlength="6" />
+    <div id="password_reg_error" class="error-message"></div>
+
+    <label for="role">Роль:</label>
+    <select id="role" onchange="toggleTeacherFields()">
+      <option value="student">Студент</option>
+      <option value="teacher">Викладач</option>
+    </select>
+
+    <div id="teacherFields">
+      <label for="department">Кафедра:</label>
+      <input type="text" id="department" />
+      
+      <label for="specialization">Спеціалізація:</label>
+      <input type="text" id="specialization" />
+    </div>
+
+    <button type="submit">Зареєструватись</button>
+  </form>
+
+  <!-- Форма входу -->
+  <form id="loginForm">
+    <label for="email_log">Email:</label>
+    <input type="email" id="email_log" required />
+    <div id="email_log_error" class="error-message"></div>
+
+    <label for="password_log">Пароль:</label>
+    <input type="password" id="password_log" required />
+    <div id="password_log_error" class="error-message"></div>
+
+    <button type="submit">Увійти</button>
+  </form>
+
+  <div class="toggle-link" id="toggleLink">Вже маєте акаунт? Увійти</div>
+</div>
+
+<script>
+  const registerForm = document.getElementById('registerForm');
+  const loginForm = document.getElementById('loginForm');
+  const toggleLink = document.getElementById('toggleLink');
+  const formTitle = document.getElementById('form-title');
+  const teacherFields = document.getElementById('teacherFields');
+
+  let isRegister = true;
+
+  // Перемикання між формами
+  toggleLink.onclick = () => {
+    isRegister = !isRegister;
+    if (isRegister) {
+      registerForm.classList.add('active');
+      loginForm.classList.remove('active');
+      formTitle.textContent = 'Реєстрація';
+      toggleLink.textContent = 'Вже маєте акаунт? Увійти';
+    } else {
+      registerForm.classList.remove('active');
+      loginForm.classList.add('active');
+      formTitle.textContent = 'Вхід';
+      toggleLink.textContent = 'Нема акаунту? Зареєструватись';
+    }
+  };
+
+  // Показати/сховати поля для викладача
+  function toggleTeacherFields() {
+    const role = document.getElementById('role').value;
+    teacherFields.style.display = role === 'teacher' ? 'block' : 'none';
+  }
+
+  // Валідація форми реєстрації
+  registerForm.onsubmit = async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const first_name = document.getElementById('first_name').value.trim();
+    const email = document.getElementById('email_reg').value.trim();
+    const password = document.getElementById('password_reg').value.trim();
+    const role = document.getElementById('role').value;
+    const department = document.getElementById('department').value.trim();
+    const specialization = document.getElementById('specialization').value.trim();
+
+    // Проста валідація
+    let isValid = true;
+    if (!first_name) {
+      showError('first_name_error', 'Введіть ім\'я');
+      isValid = false;
+    }
+    if (!email) {
+      showError('email_reg_error', 'Введіть email');
+      isValid = false;
+    }
+    if (password.length < 6) {
+      showError('password_reg_error', 'Пароль повинен містити мінімум 6 символів');
+      isValid = false;
+    }
+    if (!isValid) return;
+
+    try {
+      const userData = { first_name, email, password, role };
+      if (role === 'teacher') {
+        userData.department = department;
+        userData.specialization = specialization;
+      }
+
+      const res = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('Реєстрація успішна! Тепер увійдіть.');
+        toggleLink.click(); // переключитись на логін
+        registerForm.reset();
+      } else {
+        showError('email_reg_error', data.message || 'Помилка реєстрації');
+      }
+    } catch (err) {
+      showError('email_reg_error', 'Помилка мережі');
+      console.error('Registration error:', err);
+    }
+  };
+
+  // Валідація форми входу
+  loginForm.onsubmit = async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const email = document.getElementById('email_log').value.trim();
+    const password = document.getElementById('password_log').value.trim();
+
+    if (!email) {
+      showError('email_log_error', 'Введіть email');
+      return;
+    }
+    if (!password) {
+      showError('password_log_error', 'Введіть пароль');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = 'dashboard.html';
+      } else {
+        showError('password_log_error', data.message || 'Невірний email або пароль');
+      }
+    } catch (err) {
+      showError('password_log_error', 'Помилка мережі');
+      console.error('Login error:', err);
+    }
+  };
+
+  function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = message;
+    }
+  }
+
+  function clearErrors() {
+    const errors = document.querySelectorAll('.error-message');
+    errors.forEach(error => error.textContent = '');
+  }
+</script>
+
+</body>
+</html>
