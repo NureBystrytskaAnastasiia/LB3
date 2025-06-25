@@ -29,10 +29,11 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// Error handling
+// Error handling — додано детальний лог і повернення тексту помилки в відповіді
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Щось пішло не так!' });
+  console.error('Error message:', err.message);
+  console.error('Error stack:', err.stack);
+  res.status(500).json({ message: err.message || 'Щось пішло не так!' });
 });
 
 const PORT = process.env.PORT || 3000;
