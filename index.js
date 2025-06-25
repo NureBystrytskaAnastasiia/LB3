@@ -22,14 +22,14 @@ app.use('/api/materials', materialsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
 // Віддаємо статичні файли з папки frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Для всіх інших маршрутів віддаємо index.html (якщо SPA)
-app.get('*', (req, res) => {
+// Для всіх маршрутів, що не починаються з /api, віддаємо index.html
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
+
 
 // Error handling
 app.use((err, req, res, next) => {
